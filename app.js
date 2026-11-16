@@ -157,6 +157,7 @@ function render(){
   $('dashboardWorkouts').innerHTML=dayWorkouts.length?dayWorkouts.map(x=>compact(x,'workout')).join(''):'<div class="empty-state">Nenhum treino cadastrado para hoje.</div>';
   $('mealsList').innerHTML=dayMeals.length?dayMeals.map(x=>record(x,'meal')).join(''):'<div class="panel empty-state">Sua dieta diária será carregada aqui.</div>';
   $('workoutsList').innerHTML=workouts.length?workouts.map(x=>record(x,'workout')).join(''):'<div class="panel empty-state">Você ainda não cadastrou treinos. Clique em “Novo treino” para começar.</div>';
+  $('workoutsList').querySelectorAll('[data-action="open-workout"]').forEach(button=>{button.type='button';button.addEventListener('click',()=>{try{openWorkout(button.dataset.id);}catch(error){console.error('Erro ao abrir exercícios:',error);toast('Não foi possível abrir o guia: '+(error.message||'erro inesperado'));}});});
   $('galleryGrid').innerHTML=photos.length?photos.map(photoCard).join(''):'<div class="panel empty-state">Suas fotos aparecerão aqui depois do primeiro envio.</div>';
   const history=[...meals.map(x=>({...x,kind:'Refeição'})),...workouts.map(x=>({...x,kind:'Treino'}))].sort((a,b)=>(b.log_date||'').localeCompare(a.log_date||''));
   $('historyList').innerHTML=history.length?history.map(x=>`<div class="record-card"><div class="record-main"><div class="record-top"><h4>${esc(x.name)}</h4><span class="record-time">${x.kind}</span></div><p class="record-description">${esc(x.log_date||'')}</p><span class="${x.completed?'done-label':'muted'}">${x.completed?'✓ Concluído':'Pendente'}</span></div></div>`).join(''):'<div class="panel empty-state">Seu histórico aparecerá aqui.</div>';
@@ -175,7 +176,7 @@ function parseWorkoutExercises(workout){
 }
 function exerciseKey(w,i){return 'fitness-exercises:'+currentUser.id+':'+w.id+':'+String(w.log_date||today()).slice(0,10)+':'+i;}
 function exerciseDone(w,i){return localStorage.getItem(exerciseKey(w,i))==='1';}
-function openWorkout(id){const w=workouts.find(x=>String(x.id)===String(id));if(!w)return;renderWorkoutDetail(w);openDialog('exerciseDialog');}
+function openWorkout(id){const w=workouts.find(x=>String(x.id)===String(id));if(!w){toast('Treino não encontrado. Atualize a página e tente novamente.');return;}renderWorkoutDetail(w);const dialog=$('exerciseDialog');if(!dialog.open)dialog.showModal();}
 function renderWorkoutDetail(w){
  const items=parseWorkoutExercises(w),done=items.filter((x,i)=>exerciseDone(w,i)).length;
  $('exerciseDialogTitle').textContent=w.name;
@@ -262,7 +263,6 @@ document.addEventListener('click',async e=>{
   const nav=e.target.closest('[data-view]');if(nav){navigate(nav.dataset.view);return;}
   const a=e.target.closest('[data-action]');if(!a)return;
   if(a.dataset.action==='toggle')await toggle(a.dataset.type,a.dataset.id);
-  if(a.dataset.action==='open-workout')openWorkout(a.dataset.id);
   if(a.dataset.action==='exercise-toggle')await toggleExercise(a.dataset.workout,Number(a.dataset.index));
   if(a.dataset.action==='edit')editItem(a.dataset.type,a.dataset.id);
   if(a.dataset.action==='delete'&&confirm('Excluir este registro?'))await deleteItem(a.dataset.type,a.dataset.id);
