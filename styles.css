@@ -33,3 +33,31 @@
 .meal-calorie-list>div:last-child{border-bottom:0}
 .meal-calorie-list strong{color:var(--green-dark)}
 @media(max-width:480px){.nutrition-panel{padding:16px}.nutrition-total strong{font-size:26px}.macro-grid{gap:6px}.macro-grid>div{padding:9px}.macro-grid strong{font-size:16px}.meal-calorie-list{padding:4px 12px}}
+
+.exercise-modal{width:min(100% - 20px,760px);max-height:92vh;overflow:auto}
+.exercise-modal .modal-head{position:sticky;top:-25px;background:#fff;z-index:2;padding:5px 0 12px}
+.exercise-progress-wrap{display:flex;align-items:center;gap:12px;margin:0 0 16px}
+.exercise-progress-track{height:8px;background:#edf1f3;border-radius:20px;overflow:hidden;flex:1}
+.exercise-progress-track i{display:block;height:100%;width:0;background:var(--green);border-radius:20px}
+.exercise-progress-wrap strong{font-size:11px;color:var(--green-dark);white-space:nowrap}
+.exercise-list{display:grid;gap:14px}
+.exercise-card{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff}
+.exercise-card.is-done{border-color:#b9e7cf;background:#f8fdf9}
+.exercise-check{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;color:var(--green-dark);font-weight:700;margin-bottom:12px}
+.exercise-check input{position:absolute;opacity:0;width:1px;height:1px}
+.exercise-checkmark{width:19px;height:19px;border:1.5px solid #b9c7c1;border-radius:6px;display:inline-grid;place-items:center;background:#fff}
+.exercise-check input:checked+.exercise-checkmark{background:var(--green);border-color:var(--green)}
+.exercise-check input:checked+.exercise-checkmark:after{content:'✓';color:#fff;font-size:13px}
+.exercise-title-row h4{font:800 15px Manrope;margin:0}
+.exercise-title-row p{font-size:11px;color:var(--green-dark);margin:5px 0 0}
+.exercise-muscles{font-size:11px;color:var(--muted);line-height:1.5;margin:12px 0}
+.exercise-video{position:relative;width:100%;aspect-ratio:16/9;background:#101827;border-radius:10px;overflow:hidden}
+.exercise-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.video-link{display:inline-block;font-size:10px;color:var(--green-dark);font-weight:700;margin-top:7px;text-decoration:none}
+.exercise-instructions{margin-top:13px;background:#f5f8f7;border-radius:10px;padding:12px}
+.exercise-instructions strong{font-size:11px}
+.exercise-instructions ol{padding-left:19px;margin:8px 0 0}
+.exercise-instructions li{font-size:11px;color:#526174;line-height:1.55;padding:2px 0}
+.exercise-safety{font-size:10px;color:#8a6a36;line-height:1.5;margin:10px 0 0}
+.workout-record .record-actions .small-btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+@media(max-width:680px){.exercise-modal{padding:18px 14px;width:calc(100% - 12px);max-height:94vh}.exercise-card{padding:12px}.exercise-title-row h4{font-size:13px}}
