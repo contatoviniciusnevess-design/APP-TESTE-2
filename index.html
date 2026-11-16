@@ -172,6 +172,12 @@
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script src="push.js"></script>
-  <script src="motivation.js?v=17"></script>
+  <script src="motivation.js?v=18"></script>
+  <script>
+    document.getElementById("notificationPermissionBtn")?.addEventListener("click", () => {
+      const status = document.getElementById("notificationStatus");
+      if (status) status.textContent = "Toque recebido pelo botão. A rotina de ativação deve iniciar agora...";
+    }, true);
+  </script>
 </body>
 </html>
