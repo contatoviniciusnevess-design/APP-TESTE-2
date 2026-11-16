@@ -108,7 +108,21 @@ async function loadAll(){
   }
 }
 function render(){
-  const day=today(),dayMeals=meals.filter(x=>x.log_date===day),dayWorkouts=workouts.filter(x=>x.log_date===day);
+  const day=today();
+  const rawDayMeals=meals.filter(x=>String(x.log_date).slice(0,10)===day);
+  // A interface exibe apenas um registro por refeição padrão, mesmo que o banco
+  // ainda contenha duplicatas antigas. Prioriza o item já marcado como concluído.
+  const dayMeals=[];
+  const seenMealNames=new Set();
+  const mealGroups=new Map();
+  for(const item of rawDayMeals){
+    const key=String(item.name||'').trim().toLocaleLowerCase('pt-BR');
+    if(!mealGroups.has(key) || (!mealGroups.get(key).completed && item.completed)){
+      mealGroups.set(key,item);
+    }
+  }
+  dayMeals.push(...mealGroups.values());
+  const dayWorkouts=workouts.filter(x=>String(x.log_date).slice(0,10)===day);
   const doneM=dayMeals.filter(x=>x.completed).length,doneW=dayWorkouts.filter(x=>x.completed).length;
   $('mealStat').textContent=`${doneM}/${dayMeals.length}`;$('workoutStat').textContent=`${doneW}/${dayWorkouts.length}`;$('photoStat').textContent=photos.length;
   $('mealProgress').style.width=(dayMeals.length?doneM/dayMeals.length*100:0)+'%';
