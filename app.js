@@ -44,7 +44,7 @@ const configured = () => config.SUPABASE_URL && config.SUPABASE_ANON_KEY &&
 
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
 function showAuth(message=''){ $('authScreen').hidden=false; $('appScreen').hidden=true; $('authMessage').textContent=message; }
-function showApp(user){currentUser=user;$('authScreen').hidden=true;$('appScreen').hidden=false;$('userEmail').textContent=user.email||'Minha conta';$('todayLabel').textContent=niceDate().toUpperCase();$('datePill').textContent=niceDate();if(window.initFitnessExtras)window.initFitnessExtras(user);loadAll();}
+function showApp(user){currentUser=user;window.fitnessSupabaseClient=supabaseClient;window.fitnessCurrentUser=user;if(window.initFitnessPush)window.initFitnessPush(user,supabaseClient);$('authScreen').hidden=true;$('appScreen').hidden=false;$('userEmail').textContent=user.email||'Minha conta';$('todayLabel').textContent=niceDate().toUpperCase();$('datePill').textContent=niceDate();if(window.initFitnessExtras)window.initFitnessExtras(user);loadAll();}
 async function auth(action){
   if(!configured()){ $('setupWarning').hidden=false; $('authMessage').textContent='Configure primeiro o arquivo config.js.';return; }
   const email=$('email').value.trim(),password=$('password').value;
