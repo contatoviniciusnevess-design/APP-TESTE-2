@@ -17,3 +17,19 @@
 .settings-divider{height:1px;background:var(--line);margin:8px 0 18px}
 .extras-modal{max-width:500px}
 @media(max-width:680px){.top-actions{gap:8px}.top-actions #extrasBtn{font-size:10px;padding:9px 10px}.motivation-content h3{font-size:21px}}
+
+/* Resumo nutricional da dieta */
+.nutrition-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 16px #1a2b4206}
+.nutrition-total{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nutrition-total strong{font:800 30px Manrope;color:var(--green-dark)}
+.nutrition-total strong small{font-size:14px}
+.nutrition-note{font-size:10px;color:var(--muted);background:#f1f5f3;padding:7px 10px;border-radius:20px}
+.macro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
+.macro-grid>div{background:#f5f8f7;border-radius:11px;padding:12px}
+.macro-grid span{display:block;color:var(--muted);font-size:10px}
+.macro-grid strong{display:block;font:800 18px Manrope;margin-top:5px}
+.meal-calorie-list{background:#fff;border:1px solid var(--line);border-radius:14px;padding:5px 17px;margin-bottom:16px}
+.meal-calorie-list>div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f5;font-size:12px}
+.meal-calorie-list>div:last-child{border-bottom:0}
+.meal-calorie-list strong{color:var(--green-dark)}
+@media(max-width:480px){.nutrition-panel{padding:16px}.nutrition-total strong{font-size:26px}.macro-grid{gap:6px}.macro-grid>div{padding:9px}.macro-grid strong{font-size:16px}.meal-calorie-list{padding:4px 12px}}
