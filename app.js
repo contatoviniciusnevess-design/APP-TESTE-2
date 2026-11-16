@@ -31,7 +31,7 @@ async function ensureWeeklyWorkouts(){
   const existing=workouts.filter(x=>String(x.log_date).slice(0,10)>=start&&String(x.log_date).slice(0,10)<=end);
   const missing=DEFAULT_WORKOUT_PLAN.filter(plan=>!existing.some(x=>x.name===plan.name&&String(x.log_date).slice(0,10)>=start&&String(x.log_date).slice(0,10)<=end));
   if(!missing.length)return;
-  const inserted=await supabaseClient.from('workouts').insert(missing.map((item,index)=>({...item,user_id:currentUser.id,log_date:weekDate(index),completed:false})));
+  const inserted=await supabaseClient.from('workouts').insert(missing.map(item=>({...item,user_id:currentUser.id,log_date:weekDate(DEFAULT_WORKOUT_PLAN.indexOf(item)),completed:false})));
   if(inserted.error){console.error('Erro ao cadastrar a divisão semanal:',inserted.error);toast('Não foi possível cadastrar automaticamente a divisão semanal.');return;}
   const refreshed=await supabaseClient.from('workouts').select('*').order('created_at');
   if(!refreshed.error)workouts=refreshed.data||workouts;
