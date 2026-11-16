@@ -132,7 +132,7 @@ document.addEventListener('click',async e=>{
 });
 $('loginBtn').onclick=()=>auth('login');$('signupBtn').onclick=()=>auth('signup');
 $('logoutBtn').onclick=async()=>{await supabaseClient.auth.signOut();showAuth('Você saiu da sua conta.')};
-$('addMealBtn').onclick=()=>{resetForm('meal');$('mealDialogTitle').textContent='Nova refeição';openDialog('mealDialog')};
+
 $('addWorkoutBtn').onclick=()=>{resetForm('workout');$('workoutDialogTitle').textContent='Novo treino';openDialog('workoutDialog')};
 $('addPhotoBtn').onclick=()=>openDialog('photoDialog');
 $('mealForm').onsubmit=async e=>{e.preventDefault();const ok=await saveItem('meal',{name:$('mealName').value.trim(),meal_time:$('mealTime').value,description:$('mealDescription').value.trim()},$('mealId').value||null);if(ok)closeDialog('mealDialog')};
