@@ -61,3 +61,100 @@
 .exercise-safety{font-size:10px;color:#8a6a36;line-height:1.5;margin:10px 0 0}
 .workout-record .record-actions .small-btn.primary{background:var(--green);border-color:var(--green);color:#fff}
 @media(max-width:680px){.exercise-modal{padding:18px 14px;width:calc(100% - 12px);max-height:94vh}.exercise-card{padding:12px}.exercise-title-row h4{font-size:13px}}
+
+
+/* VISUAL GYM / BOX — tema grafite, aço e laranja energia */
+:root{
+ --ink:#f2f4f6;--muted:#9aa4af;--line:#303943;--bg:#11161b;
+ --green:#ff7138;--green-dark:#e85a24;--mint:#33251f;--navy:#0a0e12;
+ --white:#1a2128;--shadow:0 14px 38px rgba(0,0,0,.24);
+}
+body{background:var(--bg);color:var(--ink)}
+.auth-screen{background:radial-gradient(circle at 15% 15%,#4a281b 0,transparent 32%),radial-gradient(circle at 85% 80%,#202b34 0,transparent 35%),#0c1116}
+.auth-card,.stat-card,.panel,.record-card,.photo-card,.nutrition-panel,.meal-calorie-list{
+ background:#1a2128;border-color:#303943;box-shadow:var(--shadow)
+}
+.auth-card{border-radius:18px;border-top:3px solid var(--green)}
+.brand-mark,.motivation-symbol{background:var(--green);color:#11161b;border-radius:12px}
+.auth-card h1 span{color:var(--green)}
+.eyebrow{color:#ff8a5c}
+.field label{color:#c5cbd2}
+.field input,.field textarea,.field select{background:#11171d;border-color:#38434e;color:#f2f4f6}
+.field input::placeholder,.field textarea::placeholder{color:#687582}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--green);box-shadow:0 0 0 3px #ff713822}
+.btn.primary,.workout-record .record-actions .small-btn.primary{background:var(--green);border-color:var(--green);color:#11161b}
+.btn.primary:hover{background:#ff895a}
+.btn.ghost{background:#29323b;color:#d7dde3}
+.sidebar{background:#090d11;border-right:1px solid #252e37}
+.side-brand span,.user-meta span{color:#85919d}
+.nav-link{color:#9da8b3}
+.nav-link.active,.nav-link:hover{background:#242d35;color:#fff}
+.nav-link.active{box-shadow:inset 3px 0 var(--green)}
+.avatar{background:#3b281f;color:#ff9b72}
+.user-chip{border-color:#27313a}
+.main{background:radial-gradient(ellipse at 90% 0%,#202a32 0,transparent 32%)}
+.topbar h2,.section-heading h3,.panel h3,.record-top h4,.modal-head h3{color:#f3f5f7}
+.cloud-status{color:#a4afb9}
+.cloud-status i{background:var(--green)}
+.mobile-menu{background:#252e37;color:#fff}
+.welcome{background:linear-gradient(115deg,#211b18,#3b251d 55%,#202a31);border:1px solid #5b3829;border-radius:16px;position:relative}
+.welcome:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.13;background:repeating-linear-gradient(135deg,transparent 0 18px,#fff 19px 20px,transparent 21px 38px)}
+.welcome>div{position:relative;z-index:1}
+.welcome .eyebrow{color:#ff9a72}
+.welcome p:last-child{color:#d0c3bc}
+.welcome-symbol{color:#ff713833}
+.stat-card span,.stat-card small,.muted{color:var(--muted)}
+.stat-card strong{color:#fff}
+.progress,.exercise-progress-track{background:#303943}
+.progress i,.exercise-progress-track i{background:var(--green)}
+.date-pill,.record-time{background:#3b281f;color:#ff9a72}
+.section-heading p:not(.eyebrow){color:#9aa4af}
+.text-btn,.done-label,.exercise-progress-wrap strong,.exercise-title-row p,.exercise-check,.exercise-muscles strong{color:#ff8a5c}
+.compact-row{border-color:#2b343d}
+.compact-row strong{color:#edf0f3}
+.check-dot{background:#151b21;border-color:#46515c}
+.check-dot.done{background:var(--green);border-color:var(--green);color:#111}
+.tip-panel{background:#211f1d;border-color:#493326}
+.tip-icon{background:#3b281f;color:#ff8a5c}
+.tip-panel strong{color:#f2f4f6}
+.tip-panel p{color:#aaa9a7}
+.record-time{border-radius:6px}
+.record-description{color:#a5afb9}
+.small-btn{background:#252e37;border-color:#3a4651;color:#d2d8de}
+.small-btn.danger{color:#ff8b80}
+.photo-card img{background:#252e37}
+.photo-info span{color:#9aa4af}
+.modal{background:#1a2128;color:#f2f4f6;border:1px solid #39444e}
+.modal::backdrop{background:#05080bd9;backdrop-filter:blur(5px)}
+.close-btn{background:#2b343d;color:#f2f4f6}
+.upload-box,.exercise-instructions{background:#202830;border-color:#46515c;color:#b6c0c9}
+.exercise-modal .modal-head{background:#1a2128}
+.exercise-card{background:#202830;border-color:#38434e}
+.exercise-card.is-done{background:#202b27;border-color:#557b66}
+.exercise-checkmark{background:#151b21;border-color:#66727e}
+.exercise-check input:checked+.exercise-checkmark{background:var(--green);border-color:var(--green)}
+.exercise-instructions li{color:#c1c9d0}
+.exercise-safety{color:#e8b66c}
+.video-link{color:#ff9a72}
+.nutrition-total strong,.meal-calorie-list strong{color:#ff8a5c}
+.nutrition-note{background:#2a333b;color:#b6c0c9}
+.macro-grid>div{background:#222b33}
+.macro-grid span{color:#aab4bd}
+.macro-grid strong{color:#f4f6f8}
+.meal-calorie-list>div{border-color:#303943}
+.toast{background:#ff7138;color:#11161b;font-weight:700}
+.motivation-modal{background:linear-gradient(145deg,#202830,#2b211c)}
+.motivation-content h3{color:#f3f5f7}
+.motivation-content>p:not(.eyebrow){color:#aeb8c1}
+.setting-row strong{color:#f2f4f6}
+.setting-row small{color:#a0abb5}
+.settings-divider{background:#303943}
+.setting-row input{accent-color:var(--green)}
+@media(max-width:680px){
+ .sidebar{background:#090d11;box-shadow:12px 0 40px #0008}
+ .main{background:radial-gradient(ellipse at 90% 0%,#202a32 0,transparent 28%)}
+ .welcome{padding:23px 19px}
+ .welcome h1{font-size:24px}
+ .stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .stat-card{background:#1a2128}
+}
