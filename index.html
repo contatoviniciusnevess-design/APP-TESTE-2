@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Seu diário pessoal de alimentação, treinos e evolução.">
+  <title>Meu Diário Fitness</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="brand-mark">✦</div>
+      <p class="eyebrow">SEU ACOMPANHAMENTO PESSOAL</p>
+      <h1>Meu Diário <span>Fitness</span></h1>
+      <p class="muted">Alimentação, treino e evolução em um só lugar.</p>
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" placeholder="voce@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" type="password" placeholder="Mínimo de 6 caracteres" autocomplete="current-password">
+      </div>
+      <button id="loginBtn" class="btn primary full">Entrar</button>
+      <button id="signupBtn" class="btn ghost full">Criar minha conta</button>
+      <p id="authMessage" class="message"></p>
+      <p class="tiny muted">Seus dados ficam vinculados à sua conta e protegidos por usuário.</p>
+      <p class="tiny warning" id="setupWarning" hidden>Configure as credenciais do Supabase em <code>config.js</code> para começar.</p>
+    </div>
+  </div>
+
+  <div id="appScreen" class="app-shell" hidden>
+    <aside class="sidebar">
+      <div class="side-brand"><div class="brand-mark small">✦</div><div><strong>Meu Diário</strong><span>FITNESS</span></div></div>
+      <nav>
+        <button class="nav-link active" data-view="dashboard">▦ <span>Visão geral</span></button>
+        <button class="nav-link" data-view="diet">◉ <span>Minha alimentação</span></button>
+        <button class="nav-link" data-view="training">↗ <span>Meus treinos</span></button>
+        <button class="nav-link" data-view="gallery">▧ <span>Galeria de fotos</span></button>
+        <button class="nav-link" data-view="history">◷ <span>Histórico</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="user-chip"><div class="avatar">U</div><div class="user-meta"><strong id="userEmail">Usuário</strong><span>Conta pessoal</span></div></div>
+        <button id="logoutBtn" class="nav-link logout">↪ <span>Sair da conta</span></button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><p class="eyebrow" id="todayLabel">SEU DIA</p><h2 id="pageTitle">Visão geral</h2></div>
+        <div class="top-actions"><span class="cloud-status"><i></i> Sincronização na nuvem</span><button class="mobile-menu" id="mobileMenu">☰</button></div>
+      </header>
+
+      <section id="dashboardView" class="view">
+        <div class="welcome">
+          <div><p class="eyebrow light">UM DIA DE CADA VEZ</p><h1>Seu progresso começa<br>com pequenas escolhas.</h1><p>Registre o que você fez hoje e acompanhe sua consistência.</p></div>
+          <div class="welcome-symbol">✦</div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><span>Refeições concluídas</span><strong id="mealStat">0/0</strong><div class="progress"><i id="mealProgress"></i></div></article>
+          <article class="stat-card"><span>Treinos concluídos</span><strong id="workoutStat">0/0</strong><div class="progress"><i id="workoutProgress"></i></div></article>
+          <article class="stat-card"><span>Registros com foto</span><strong id="photoStat">0</strong><small>Fotos enviadas</small></article>
+        </div>
+        <div class="section-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h3>Seu plano de hoje</h3></div><span class="date-pill" id="datePill"></span></div>
+        <div class="dashboard-columns">
+          <article class="panel"><div class="panel-heading"><h3>🍽️ Alimentação</h3><button class="text-btn" data-go="diet">Ver tudo →</button></div><div id="dashboardMeals" class="compact-list empty-state">Cadastre suas refeições para começar.</div></article>
+          <article class="panel"><div class="panel-heading"><h3>🏋️ Treinos</h3><button class="text-btn" data-go="training">Ver tudo →</button></div><div id="dashboardWorkouts" class="compact-list empty-state">Cadastre seus treinos para começar.</div></article>
+        </div>
+        <div class="panel tip-panel"><div class="tip-icon">✧</div><div><strong>Consistência vale mais que perfeição.</strong><p>Use os registros para acompanhar sua rotina, sem transformar um dia difícil em motivo para desistir.</p></div></div>
+      </section>
+
+      <section id="dietView" class="view" hidden>
+        <div class="section-heading"><div><p class="eyebrow">ROTINA ALIMENTAR</p><h3>Minha alimentação</h3><p class="muted">Cadastre suas refeições e marque cada uma quando concluir.</p></div><button class="btn primary" id="addMealBtn">＋ Nova refeição</button></div>
+        <div id="mealsList" class="item-list"></div>
+      </section>
+
+      <section id="trainingView" class="view" hidden>
+        <div class="section-heading"><div><p class="eyebrow">ATIVIDADE FÍSICA</p><h3>Meus treinos</h3><p class="muted">Organize seus treinos, exercícios e conclusão diária.</p></div><button class="btn primary" id="addWorkoutBtn">＋ Novo treino</button></div>
+        <div id="workoutsList" class="item-list"></div>
+      </section>
+
+      <section id="galleryView" class="view" hidden>
+        <div class="section-heading"><div><p class="eyebrow">REGISTRO VISUAL</p><h3>Galeria de fotos</h3><p class="muted">Fotos das refeições, treinos e evolução corporal.</p></div><button class="btn primary" id="addPhotoBtn">＋ Enviar foto</button></div>
+        <div id="galleryGrid" class="gallery-grid"></div>
+      </section>
+
+      <section id="historyView" class="view" hidden>
+        <div class="section-heading"><div><p class="eyebrow">SUA CAMINHADA</p><h3>Histórico de registros</h3><p class="muted">Consulte suas atividades e fotos registradas.</p></div></div>
+        <div id="historyList" class="item-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="mealDialog" class="modal">
+    <form id="mealForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">PLANO ALIMENTAR</p><h3 id="mealDialogTitle">Nova refeição</h3></div><button type="button" class="close-btn" data-close="mealDialog">×</button></div>
+      <input type="hidden" id="mealId">
+      <div class="field"><label>Nome da refeição</label><input id="mealName" required placeholder="Ex.: Café da manhã"></div>
+      <div class="field"><label>Horário</label><input id="mealTime" type="time"></div>
+      <div class="field"><label>Alimentos / orientações</label><textarea id="mealDescription" rows="3" placeholder="Ex.: ovos, pão integral e fruta"></textarea></div>
+      <div class="modal-actions"><button type="button" class="btn ghost" data-close="mealDialog">Cancelar</button><button class="btn primary" type="submit">Salvar refeição</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="workoutDialog" class="modal">
+    <form id="workoutForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">PLANO DE TREINO</p><h3 id="workoutDialogTitle">Novo treino</h3></div><button type="button" class="close-btn" data-close="workoutDialog">×</button></div>
+      <input type="hidden" id="workoutId">
+      <div class="field"><label>Nome do treino</label><input id="workoutName" required placeholder="Ex.: Peito e tríceps"></div>
+      <div class="field"><label>Dia / horário</label><input id="workoutSchedule" placeholder="Ex.: Segunda-feira • 18h"></div>
+      <div class="field"><label>Exercícios, séries e repetições</label><textarea id="workoutDescription" rows="5" placeholder="Supino reto — 3x12&#10;Crucifixo — 3x10&#10;Tríceps pulley — 3x12"></textarea></div>
+      <div class="modal-actions"><button type="button" class="btn ghost" data-close="workoutDialog">Cancelar</button><button class="btn primary" type="submit">Salvar treino</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="photoDialog" class="modal">
+    <form id="photoForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">DIÁRIO VISUAL</p><h3>Adicionar registro</h3></div><button type="button" class="close-btn" data-close="photoDialog">×</button></div>
+      <div class="field"><label>Tipo de registro</label><select id="photoType"><option value="Refeição">Refeição</option><option value="Treino">Treino</option><option value="Evolução física">Evolução física</option><option value="Outro">Outro</option></select></div>
+      <div class="field"><label>Descrição</label><input id="photoCaption" placeholder="Ex.: Almoço de segunda-feira"></div>
+      <div class="upload-box"><input id="photoFile" type="file" accept="image/*" capture="environment" required><span>Escolha uma imagem ou tire uma foto pelo celular.</span></div>
+      <p class="tiny muted">A imagem será armazenada na sua área privada na nuvem.</p>
+      <div class="modal-actions"><button type="button" class="btn ghost" data-close="photoDialog">Cancelar</button><button class="btn primary" type="submit">Enviar foto</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
