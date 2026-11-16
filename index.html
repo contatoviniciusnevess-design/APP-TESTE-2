@@ -53,7 +53,7 @@
     <main class="main">
       <header class="topbar">
         <div><p class="eyebrow" id="todayLabel">SEU DIA</p><h2 id="pageTitle">Visão geral</h2></div>
-        <div class="top-actions"><span class="cloud-status"><i></i> Sincronização na nuvem</span><button class="mobile-menu" id="mobileMenu">☰</button></div>
+        <div class="top-actions"><span class="cloud-status"><i></i> Sincronização na nuvem</span><button class="btn ghost" id="extrasBtn" type="button">✦ Motivação e lembretes</button><button class="mobile-menu" id="mobileMenu">☰</button></div>
       </header>
 
       <section id="dashboardView" class="view">
@@ -128,8 +128,32 @@
       <div class="modal-actions"><button type="button" class="btn ghost" data-close="photoDialog">Cancelar</button><button class="btn primary" type="submit">Enviar foto</button></div>
     </form>
   </dialog>
+  <dialog id="motivationDialog" class="modal motivation-modal">
+    <div class="motivation-content">
+      <div class="motivation-symbol">✦</div>
+      <p class="eyebrow">UM PASSO DE CADA VEZ</p>
+      <h3 id="motivationTitle">Você está construindo algo importante.</h3>
+      <p id="motivationText">Pequenas escolhas, repetidas todos os dias, fazem diferença.</p>
+      <button class="btn primary full" id="motivationClose" type="button">Vamos continuar</button>
+    </div>
+  </dialog>
+
+  <dialog id="extrasDialog" class="modal extras-modal">
+    <div class="modal-head"><div><p class="eyebrow">PERSONALIZE SUA ROTINA</p><h3>Motivação e lembretes</h3></div><button type="button" class="close-btn" data-close="extrasDialog">×</button></div>
+    <label class="setting-row"><span><strong>Mensagem motivacional diária</strong><small>Mostrar uma mensagem ao abrir o aplicativo pela primeira vez no dia.</small></span><input id="dailyMotivationToggle" type="checkbox" checked></label>
+    <div class="settings-divider"></div>
+    <p class="eyebrow">LEMBRETES DIÁRIOS</p>
+    <p class="tiny muted">Os avisos abaixo funcionam enquanto o aplicativo estiver aberto. A entrega com o app fechado será configurada na próxima etapa.</p>
+    <label class="setting-row"><span><strong>Lembrete de alimentação</strong><small>Horário diário para lembrar de conferir suas refeições.</small></span><input id="mealReminderToggle" type="checkbox"></label>
+    <div class="field"><label for="mealReminderTime">Horário do lembrete alimentar</label><input id="mealReminderTime" type="time" value="12:00"></div>
+    <label class="setting-row"><span><strong>Lembrete de treino</strong><small>Horário diário para lembrar da atividade física.</small></span><input id="workoutReminderToggle" type="checkbox"></label>
+    <div class="field"><label for="workoutReminderTime">Horário do lembrete de treino</label><input id="workoutReminderTime" type="time" value="18:00"></div>
+    <div class="modal-actions"><button type="button" class="btn ghost" id="notificationPermissionBtn">Ativar notificações</button><button type="button" class="btn primary" id="saveExtrasBtn">Salvar preferências</button></div>
+    <p id="notificationStatus" class="tiny muted" aria-live="polite"></p>
+  </dialog>
   <div id="toast" class="toast"></div>
   <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="motivation.js"></script>
 </body>
 </html>
