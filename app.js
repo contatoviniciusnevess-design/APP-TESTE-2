@@ -156,21 +156,14 @@ function render(){
   $('dashboardMeals').innerHTML=dayMeals.length?dayMeals.map(x=>compact(x,'meal')).join(''):'<div class="empty-state">Nenhuma refeição cadastrada para hoje.</div>';
   $('dashboardWorkouts').innerHTML=dayWorkouts.length?dayWorkouts.map(x=>compact(x,'workout')).join(''):'<div class="empty-state">Nenhum treino cadastrado para hoje.</div>';
   $('mealsList').innerHTML=dayMeals.length?dayMeals.map(x=>record(x,'meal')).join(''):'<div class="panel empty-state">Sua dieta diária será carregada aqui.</div>';
-  // Ordem fixa por dia da semana. O status concluído nunca altera a posição do treino.
-  const weekdayRank = (item) => {
-    const label = (String(item.schedule || '') + ' ' + String(item.name || '')).toLocaleLowerCase('pt-BR');
-    const days = [
-      ['segunda', 0], ['terça', 1, 'terca'], ['quarta', 2], ['quinta', 3],
-      ['sexta', 4], ['sábado', 5, 'sabado'], ['domingo', 6]
-    ];
-    for (const day of days) {
-      if (label.includes(day[0]) || (day[2] && label.includes(day[2]))) return day[1];
-    }
-    return 7;
-  };
+  // Ordem canônica da divisão semanal: segunda a sábado.
+  // Usa o nome do treino como referência principal, sem depender da data ou conclusão.
   const orderedWorkouts=[...workouts].sort((a,b)=>{
-    const rankDiff=weekdayRank(a)-weekdayRank(b);
-    if(rankDiff!==0)return rankDiff;
+    const indexA=DEFAULT_WORKOUT_PLAN.findIndex(plan=>plan.name===a.name);
+    const indexB=DEFAULT_WORKOUT_PLAN.findIndex(plan=>plan.name===b.name);
+    const rankA=indexA<0?99:indexA;
+    const rankB=indexB<0?99:indexB;
+    if(rankA!==rankB)return rankA-rankB;
     const dateA=String(a.log_date||'0000-00-00').slice(0,10);
     const dateB=String(b.log_date||'0000-00-00').slice(0,10);
     if(dateA!==dateB)return dateB.localeCompare(dateA);
