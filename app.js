@@ -3,6 +3,13 @@
 const $ = (id) => document.getElementById(id);
 const config = window.APP_CONFIG || {};
 let supabaseClient, currentUser, meals = [], workouts = [], photos = [];
+const DEFAULT_DIET = [
+  {name:'Café da manhã',meal_time:'',description:'2 fatias de pão de forma + 2 ovos'},
+  {name:'Almoço',meal_time:'',description:'150 g de arroz cozido + 120 g de carne + 80 g de feijão + salada'},
+  {name:'Lanche da tarde',meal_time:'',description:'1 banana + 200 ml de iogurte'},
+  {name:'Jantar',meal_time:'',description:'150 g de arroz cozido + 120 g de carne + 80 g de feijão + salada'},
+  {name:'Ceia',meal_time:'',description:'250 ml de leite integral + 40 g de whey (20 g de proteína)'}
+];
 window.getFitnessSchedule = () => ({ meals, workouts });
 const today = () => new Date().toLocaleDateString('en-CA');
 const niceDate = (d=today()) => new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
@@ -32,6 +39,12 @@ async function loadAll(){
   ]);
   if(m.error||w.error||p.error){toast('Não foi possível carregar os dados. Confira a configuração do banco.');console.error(m.error,w.error,p.error);return;}
   meals=m.data||[];workouts=w.data||[];photos=p.data||[];
+  // Cria a lista fixa da dieta automaticamente no primeiro acesso de cada dia.
+  if(!meals.some(x=>x.log_date===today())){
+    const seeded=await supabaseClient.from('meals').insert(DEFAULT_DIET.map(item=>({...item,user_id:currentUser.id,log_date:today(),completed:false})));
+    if(seeded.error){console.error(seeded.error);toast('Não foi possível carregar a dieta automática.');}
+    else {const refreshed=await supabaseClient.from('meals').select('*').order('meal_time');if(!refreshed.error)meals=refreshed.data||[];}
+  }
   // Bucket privado: cria links temporários para exibir cada foto ao usuário autenticado.
   for (const photo of photos) {
     const signed = await supabaseClient.storage.from('fitness-photos').createSignedUrl(photo.storage_path, 60 * 60);
@@ -47,14 +60,14 @@ function render(){
   $('workoutProgress').style.width=(dayWorkouts.length?doneW/dayWorkouts.length*100:0)+'%';
   $('dashboardMeals').innerHTML=dayMeals.length?dayMeals.map(x=>compact(x,'meal')).join(''):'<div class="empty-state">Nenhuma refeição cadastrada para hoje.</div>';
   $('dashboardWorkouts').innerHTML=dayWorkouts.length?dayWorkouts.map(x=>compact(x,'workout')).join(''):'<div class="empty-state">Nenhum treino cadastrado para hoje.</div>';
-  $('mealsList').innerHTML=meals.length?meals.map(x=>record(x,'meal')).join(''):'<div class="panel empty-state">Você ainda não cadastrou refeições. Clique em “Nova refeição” para começar.</div>';
+  $('mealsList').innerHTML=dayMeals.length?dayMeals.map(x=>record(x,'meal')).join(''):'<div class="panel empty-state">Sua dieta diária será carregada aqui.</div>';
   $('workoutsList').innerHTML=workouts.length?workouts.map(x=>record(x,'workout')).join(''):'<div class="panel empty-state">Você ainda não cadastrou treinos. Clique em “Novo treino” para começar.</div>';
   $('galleryGrid').innerHTML=photos.length?photos.map(photoCard).join(''):'<div class="panel empty-state">Suas fotos aparecerão aqui depois do primeiro envio.</div>';
   const history=[...meals.map(x=>({...x,kind:'Refeição'})),...workouts.map(x=>({...x,kind:'Treino'}))].sort((a,b)=>(b.log_date||'').localeCompare(a.log_date||''));
   $('historyList').innerHTML=history.length?history.map(x=>`<div class="record-card"><div class="record-main"><div class="record-top"><h4>${esc(x.name)}</h4><span class="record-time">${x.kind}</span></div><p class="record-description">${esc(x.log_date||'')}</p><span class="${x.completed?'done-label':'muted'}">${x.completed?'✓ Concluído':'Pendente'}</span></div></div>`).join(''):'<div class="panel empty-state">Seu histórico aparecerá aqui.</div>';
 }
 function compact(x,type){return `<div class="compact-row"><div><strong>${esc(x.name)}</strong><small>${esc(type==='meal'?(x.meal_time||'Sem horário'):(x.schedule||'Treino'))}</small></div><button class="check-dot ${x.completed?'done':''}" data-action="toggle" data-type="${type}" data-id="${x.id}" aria-label="Marcar como concluído">${x.completed?'✓':''}</button></div>`}
-function record(x,type){return `<article class="record-card"><button class="check-dot ${x.completed?'done':''}" data-action="toggle" data-type="${type}" data-id="${x.id}">${x.completed?'✓':''}</button><div class="record-main"><div class="record-top"><h4>${esc(x.name)}</h4><span class="record-time">${type==='meal'?esc(x.meal_time||'Sem horário'):esc(x.schedule||'Treino')}</span>${x.completed?'<span class="done-label">Concluído</span>':''}</div><p class="record-description">${esc(x.description||'Sem detalhes cadastrados.')}</p><div class="record-actions"><button class="small-btn" data-action="edit" data-type="${type}" data-id="${x.id}">Editar</button><button class="small-btn danger" data-action="delete" data-type="${type}" data-id="${x.id}">Excluir</button></div></div></article>`}
+function record(x,type){return `<article class="record-card"><button class="check-dot ${x.completed?'done':''}" data-action="toggle" data-type="${type}" data-id="${x.id}" aria-label="Marcar refeição como concluída">${x.completed?'✓':''}</button><div class="record-main"><div class="record-top"><h4>${esc(x.name)}</h4>${type==='meal'?'':`<span class="record-time">${esc(x.schedule||'Treino')}</span>`}${x.completed?'<span class="done-label">Concluído</span>':''}</div><p class="record-description">${esc(x.description||'Sem detalhes cadastrados.')}</p>${type==='meal'?'':`<div class="record-actions"><button class="small-btn" data-action="edit" data-type="${type}" data-id="${x.id}">Editar</button><button class="small-btn danger" data-action="delete" data-type="${type}" data-id="${x.id}">Excluir</button></div>`}</div></article>`}
 function photoCard(x){return `<article class="photo-card"><img src="${esc(x.signed_url||'')}" alt="${esc(x.caption||x.photo_type)}"><div class="photo-info"><strong>${esc(x.caption||x.photo_type)}</strong><span>${esc(x.photo_type)} • ${new Date(x.created_at).toLocaleDateString('pt-BR')}</span><br><button class="small-btn danger" data-action="delete-photo" data-id="${x.id}" data-path="${esc(x.storage_path)}">Excluir foto</button></div></article>`}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openDialog(id){$(id).showModal()}
