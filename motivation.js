@@ -75,18 +75,45 @@
       $('extrasDialog').close();
       if(typeof window.toast==='function')window.toast('Preferências salvas na sua conta.');
     });
-    $('notificationPermissionBtn').addEventListener('click',async()=>{
-      if(!('Notification' in window)){$('notificationStatus').textContent='Notificações não são suportadas neste navegador.';return}
+    $('notificationPermissionBtn').onclick=async()=>{
+      const status=$('notificationStatus'),button=$('notificationPermissionBtn');
+      button.disabled=true;
+      status.textContent='Iniciando ativação das notificações...';
       try{
-        const permission=await Notification.requestPermission();
-        if(permission==='granted'&&window.enableFitnessPush){
-          const result=await window.enableFitnessPush();
-          $('notificationStatus').textContent=result.ok?'Notificações ativadas neste dispositivo.':('Permissão concedida, mas não foi possível registrar o dispositivo: '+result.message);
-        }else{
-          $('notificationStatus').textContent='Permissão de notificações: '+permission+(permission==='granted'?' — autorização concedida.':'');
+        if(!('Notification' in window)){
+          status.textContent='Este navegador não oferece suporte à API de notificações.';
+          return;
         }
-      }catch{$('notificationStatus').textContent='Não foi possível solicitar a permissão.'}
-    });
+        if(!('serviceWorker' in navigator)){
+          status.textContent='Este navegador não oferece suporte a Service Worker.';
+          return;
+        }
+        if(!('PushManager' in window)){
+          status.textContent='Este modo do iPhone não oferece suporte a Web Push. Abra o app pelo ícone da Tela de Início.';
+          return;
+        }
+        let permission=Notification.permission;
+        if(permission==='default') permission=await Notification.requestPermission();
+        status.textContent='Permissão do iPhone: '+permission+'. Preparando o registro do aparelho...';
+        if(permission!=='granted'){
+          status.textContent='As notificações não foram autorizadas. Permissão atual: '+permission+'. Confira Ajustes do iPhone.';
+          return;
+        }
+        if(typeof window.enableFitnessPush!=='function'){
+          status.textContent='O módulo de notificações não foi carregado. Feche e abra novamente o aplicativo.';
+          return;
+        }
+        const result=await window.enableFitnessPush();
+        status.textContent=result&&result.ok
+          ?'Notificações ativadas neste dispositivo. O aparelho foi registrado no sistema.'
+          :'Falha ao registrar o aparelho: '+(result&&result.message?result.message:'resposta inesperada');
+      }catch(error){
+        console.error('Falha no botão Ativar notificações:',error);
+        status.textContent='Erro ao ativar: '+(error&&error.message?error.message:String(error));
+      }finally{
+        button.disabled=false;
+      }
+    };
     window.setInterval(checkReminders,15000);
     showDaily();
   };
