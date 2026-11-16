@@ -11,7 +11,7 @@ const DEFAULT_DIET = [
   {name:'Ceia',meal_time:'',description:'250 ml de leite integral + 40 g de whey (20 g de proteína)'}
 ];
 window.getFitnessSchedule = () => ({ meals, workouts });
-const today = () => new Date().toLocaleDateString('en-CA');
+const today = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const niceDate = (d=today()) => new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
 const configured = () => config.SUPABASE_URL && config.SUPABASE_ANON_KEY &&
   !config.SUPABASE_URL.includes('COLE_AQUI') && !config.SUPABASE_ANON_KEY.includes('COLE_AQUI');
@@ -39,11 +39,18 @@ async function loadAll(){
   ]);
   if(m.error||w.error||p.error){toast('Não foi possível carregar os dados. Confira a configuração do banco.');console.error(m.error,w.error,p.error);return;}
   meals=m.data||[];workouts=w.data||[];photos=p.data||[];
-  // Cria a lista fixa da dieta automaticamente no primeiro acesso de cada dia.
-  if(!meals.some(x=>x.log_date===today())){
-    const seeded=await supabaseClient.from('meals').insert(DEFAULT_DIET.map(item=>({...item,user_id:currentUser.id,log_date:today(),completed:false})));
-    if(seeded.error){console.error(seeded.error);toast('Não foi possível carregar a dieta automática.');}
-    else {const refreshed=await supabaseClient.from('meals').select('*').order('meal_time');if(!refreshed.error)meals=refreshed.data||[];}
+  // Garante que as cinco refeições padrão existam para hoje.
+  const todayMeals=meals.filter(x=>x.log_date===today());
+  const missingMeals=DEFAULT_DIET.filter(plan=>!todayMeals.some(saved=>saved.name===plan.name));
+  if(missingMeals.length){
+    const seeded=await supabaseClient.from('meals').insert(missingMeals.map(item=>({...item,meal_time:null,user_id:currentUser.id,log_date:today(),completed:false})));
+    if(seeded.error){
+      console.error('Erro ao inserir dieta padrão:',seeded.error);
+      toast('Erro ao carregar a dieta: '+seeded.error.message);
+    } else {
+      const refreshed=await supabaseClient.from('meals').select('*').order('meal_time');
+      if(!refreshed.error)meals=refreshed.data||[];
+    }
   }
   // Bucket privado: cria links temporários para exibir cada foto ao usuário autenticado.
   for (const photo of photos) {
