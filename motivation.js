@@ -1,6 +1,6 @@
-/* Recursos de motivação e lembretes locais do Meu Diário Fitness.
-   Nesta etapa, os lembretes são disparados enquanto o app está aberto.
-   Notificações com o app fechado exigem Web Push, configurado em etapa posterior. */
+/* Motivação e lembretes do Meu Diário Fitness.
+   Os avisos locais são processados enquanto o app está aberto.
+   A próxima etapa pode adicionar Web Push para entrega com o app fechado. */
 (() => {
   const KEY='fitness-extras-v1';
   const quotes=[
@@ -12,41 +12,49 @@
     ['Não desista de você.','O resultado é construído também nos dias em que a motivação parece pequena.'],
     ['Celebre suas conquistas.','Reconheça o esforço que você já fez. Sua evolução merece ser valorizada.']
   ];
-  let timer=null, firedToday={};
   const $=id=>document.getElementById(id);
-  const defaults={dailyMotivation:true,mealReminder:false,mealTime:'12:00',workoutReminder:false,workoutTime:'18:00'};
+  const defaults={dailyMotivation:true,mealReminder:false,workoutReminder:false,workoutTime:'18:00'};
   const read=()=>{try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{return {...defaults}}};
   const save=data=>localStorage.setItem(KEY,JSON.stringify(data));
-  const today=()=>new Date().toLocaleDateString('en-CA');
+  const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+  let firedToday={};
   function showDaily(){
     const data=read();
     if(!data.dailyMotivation||localStorage.getItem(KEY+'-shown')===today())return;
     const quote=quotes[Math.floor(Math.random()*quotes.length)];
     $('motivationTitle').textContent=quote[0];$('motivationText').textContent=quote[1];
-    $('motivationDialog').showModal();
-    localStorage.setItem(KEY+'-shown',today());
+    $('motivationDialog').showModal();localStorage.setItem(KEY+'-shown',today());
   }
-  function notify(title,body){
-    if('Notification' in window && Notification.permission==='granted'){
-      try{new Notification(title,{body,icon:'assets/icon.svg',tag:title+'-'+today()})}catch(e){console.warn(e)}
-    }else if(window.toast){window.toast(body)}
-    else alert(body);
+  async function notify(title,body,tag){
+    if(!('Notification' in window)||Notification.permission!=='granted'){
+      if(typeof window.toast==='function')window.toast(body);
+      return;
+    }
+    try{
+      if('serviceWorker' in navigator){
+        const registration=await navigator.serviceWorker.ready;
+        await registration.showNotification(title,{body,icon:'assets/icon.svg',tag,renotify:false});
+      }else new Notification(title,{body,tag});
+    }catch(error){console.warn('Não foi possível exibir a notificação:',error);if(typeof window.toast==='function')window.toast(body)}
   }
   function checkReminders(){
-    const data=read(),now=new Date(),hhmm=[String(now.getHours()).padStart(2,'0'),String(now.getMinutes()).padStart(2,'0')].join(':');
-    for(const [kind,enabled,time,title,body] of [
-      ['meal',data.mealReminder,data.mealTime,'Hora de cuidar da alimentação','Confira seu planejamento alimentar no Meu Diário Fitness.'],
-      ['workout',data.workoutReminder,data.workoutTime,'Hora de se movimentar','Seu treino está esperando por você. Respeite seu ritmo e comece!']
-    ]){
-      const stamp=today()+'-'+kind+'-'+time;
-      if(enabled&&time===hhmm&&firedToday[kind]!==stamp){firedToday[kind]=stamp;notify(title,body)}
+    const data=read(),now=new Date(),hhmm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    const schedule=typeof window.getFitnessSchedule==='function'?window.getFitnessSchedule():{meals:[],workouts:[]};
+    if(data.mealReminder){
+      (schedule.meals||[]).filter(m=>m.meal_time&&!m.completed).forEach(meal=>{
+        const tag=today()+'-meal-'+meal.id+'-'+meal.meal_time;
+        if(meal.meal_time===hhmm&&firedToday[tag]!==true){firedToday[tag]=true;notify('Hora da refeição: '+meal.name,'Confira os alimentos e orientações cadastrados no seu plano.',tag)}
+      });
+    }
+    if(data.workoutReminder&&data.workoutTime===hhmm){
+      const tag=today()+'-workout-'+data.workoutTime;
+      if(firedToday[tag]!==true){firedToday[tag]=true;notify('Hora do seu treino','Seu treino está esperando por você. Respeite seu ritmo e comece!',tag)}
     }
   }
   function openSettings(){
     const d=read();
     $('dailyMotivationToggle').checked=d.dailyMotivation;
     $('mealReminderToggle').checked=d.mealReminder;
-    $('mealReminderTime').value=d.mealTime;
     $('workoutReminderToggle').checked=d.workoutReminder;
     $('workoutReminderTime').value=d.workoutTime;
     $('notificationStatus').textContent=('Notification' in window)?'Permissão de notificações: '+Notification.permission:'Este navegador não oferece notificações.';
@@ -58,23 +66,18 @@
     $('extrasBtn').addEventListener('click',openSettings);
     $('motivationClose').addEventListener('click',()=>$('motivationDialog').close());
     $('saveExtrasBtn').addEventListener('click',()=>{
-      save({
-        dailyMotivation:$('dailyMotivationToggle').checked,
-        mealReminder:$('mealReminderToggle').checked,
-        mealTime:$('mealReminderTime').value||'12:00',
-        workoutReminder:$('workoutReminderToggle').checked,
-        workoutTime:$('workoutReminderTime').value||'18:00'
-      });
+      save({dailyMotivation:$('dailyMotivationToggle').checked,mealReminder:$('mealReminderToggle').checked,workoutReminder:$('workoutReminderToggle').checked,workoutTime:$('workoutReminderTime').value||'18:00'});
       $('extrasDialog').close();
-      if(window.toast)window.toast('Preferências salvas neste dispositivo.');
+      if(typeof window.toast==='function')window.toast('Preferências salvas neste dispositivo.');
     });
     $('notificationPermissionBtn').addEventListener('click',async()=>{
       if(!('Notification' in window)){$('notificationStatus').textContent='Notificações não são suportadas neste navegador.';return}
-      try{const permission=await Notification.requestPermission();$('notificationStatus').textContent='Permissão de notificações: '+permission}
-      catch{$('notificationStatus').textContent='Não foi possível solicitar a permissão.'}
+      try{
+        const permission=await Notification.requestPermission();
+        $('notificationStatus').textContent='Permissão de notificações: '+permission+(permission==='granted'?' — autorização concedida.':'');
+      }catch{$('notificationStatus').textContent='Não foi possível solicitar a permissão.'}
     });
-    if(timer)clearInterval(timer);
-    timer=setInterval(checkReminders,15000);
+    window.setInterval(checkReminders,15000);
     showDaily();
   };
 })();
