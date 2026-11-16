@@ -156,7 +156,13 @@ function render(){
   $('dashboardMeals').innerHTML=dayMeals.length?dayMeals.map(x=>compact(x,'meal')).join(''):'<div class="empty-state">Nenhuma refeição cadastrada para hoje.</div>';
   $('dashboardWorkouts').innerHTML=dayWorkouts.length?dayWorkouts.map(x=>compact(x,'workout')).join(''):'<div class="empty-state">Nenhum treino cadastrado para hoje.</div>';
   $('mealsList').innerHTML=dayMeals.length?dayMeals.map(x=>record(x,'meal')).join(''):'<div class="panel empty-state">Sua dieta diária será carregada aqui.</div>';
-  // Mantém a sequência semanal fixa pela data do treino, sem usar o status de conclusão para ordenar.\n  const orderedWorkouts=[...workouts].sort((a,b)=>{\n    const dateA=String(a.log_date||'9999-12-31').slice(0,10),dateB=String(b.log_date||'9999-12-31').slice(0,10);\n    if(dateA!==dateB)return dateA.localeCompare(dateB);\n    return String(a.schedule||'').localeCompare(String(b.schedule||''),'pt-BR');\n  });\n  $('workoutsList').innerHTML=orderedWorkouts.length?orderedWorkouts.map(x=>record(x,'workout')).join(''):'<div class="panel empty-state">Você ainda não cadastrou treinos. Clique em “Novo treino” para começar.</div>';
+  // Mantém a sequência semanal fixa pela data do treino, sem usar o status de conclusão para ordenar.
+  const orderedWorkouts=[...workouts].sort((a,b)=>{
+    const dateA=String(a.log_date||'9999-12-31').slice(0,10),dateB=String(b.log_date||'9999-12-31').slice(0,10);
+    if(dateA!==dateB)return dateA.localeCompare(dateB);
+    return String(a.schedule||'').localeCompare(String(b.schedule||''),'pt-BR');
+  });
+  $('workoutsList').innerHTML=orderedWorkouts.length?orderedWorkouts.map(x=>record(x,'workout')).join(''):'<div class="panel empty-state">Você ainda não cadastrou treinos. Clique em “Novo treino” para começar.</div>';
   $('workoutsList').querySelectorAll('[data-action="open-workout"]').forEach(button=>{button.type='button';button.addEventListener('click',()=>{try{openWorkout(button.dataset.id);}catch(error){console.error('Erro ao abrir exercícios:',error);toast('Não foi possível abrir o guia: '+(error.message||'erro inesperado'));}});});
   $('galleryGrid').innerHTML=photos.length?photos.map(photoCard).join(''):'<div class="panel empty-state">Suas fotos aparecerão aqui depois do primeiro envio.</div>';
   const history=[...meals.map(x=>({...x,kind:'Refeição'})),...workouts.map(x=>({...x,kind:'Treino'}))].sort((a,b)=>(b.log_date||'').localeCompare(a.log_date||''));
