@@ -3,6 +3,7 @@
 const $ = (id) => document.getElementById(id);
 const config = window.APP_CONFIG || {};
 let supabaseClient, currentUser, meals = [], workouts = [], photos = [];
+let mealLoadError = '';
 const DEFAULT_DIET = [
   {name:'Café da manhã',meal_time:'',description:'2 fatias de pão de forma + 2 ovos'},
   {name:'Almoço',meal_time:'',description:'150 g de arroz cozido + 120 g de carne + 80 g de feijão + salada'},
@@ -32,32 +33,54 @@ async function auth(action){
   if(result.data.user)showApp(result.data.user);
 }
 async function loadAll(){
+  mealLoadError = '';
   const [m,w,p]=await Promise.all([
     supabaseClient.from('meals').select('*').order('meal_time'),
     supabaseClient.from('workouts').select('*').order('created_at'),
     supabaseClient.from('photo_logs').select('*').order('created_at',{ascending:false})
   ]);
-  if(m.error||w.error||p.error){toast('Não foi possível carregar os dados. Confira a configuração do banco.');console.error(m.error,w.error,p.error);return;}
-  meals=m.data||[];workouts=w.data||[];photos=p.data||[];
-  // Garante que as cinco refeições padrão existam para hoje.
-  const todayMeals=meals.filter(x=>x.log_date===today());
-  const missingMeals=DEFAULT_DIET.filter(plan=>!todayMeals.some(saved=>saved.name===plan.name));
-  if(missingMeals.length){
-    const seeded=await supabaseClient.from('meals').insert(missingMeals.map(item=>({...item,meal_time:null,user_id:currentUser.id,log_date:today(),completed:false})));
-    if(seeded.error){
-      console.error('Erro ao inserir dieta padrão:',seeded.error);
-      toast('Erro ao carregar a dieta: '+seeded.error.message);
-    } else {
-      const refreshed=await supabaseClient.from('meals').select('*').order('meal_time');
-      if(!refreshed.error)meals=refreshed.data||[];
+
+  if(m.error){
+    meals=[];
+    mealLoadError='Não foi possível consultar suas refeições no banco: '+m.error.message;
+    console.error('Erro ao consultar refeições:',m.error);
+  } else {
+    meals=m.data||[];
+    const todayMeals=meals.filter(x=>String(x.log_date).slice(0,10)===today());
+    const missingMeals=DEFAULT_DIET.filter(plan=>!todayMeals.some(saved=>saved.name===plan.name));
+    if(missingMeals.length){
+      const seeded=await supabaseClient.from('meals').insert(
+        missingMeals.map(item=>({...item,meal_time:null,user_id:currentUser.id,log_date:today(),completed:false}))
+      );
+      if(seeded.error){
+        mealLoadError='Não foi possível cadastrar a dieta automática: '+seeded.error.message;
+        console.error('Erro ao inserir dieta padrão:',seeded.error);
+      } else {
+        const refreshed=await supabaseClient.from('meals').select('*').order('meal_time');
+        if(refreshed.error){
+          mealLoadError='A dieta foi cadastrada, mas não foi possível atualizar a lista: '+refreshed.error.message;
+          console.error('Erro ao atualizar refeições:',refreshed.error);
+        } else {
+          meals=refreshed.data||[];
+        }
+      }
     }
   }
-  // Bucket privado: cria links temporários para exibir cada foto ao usuário autenticado.
+
+  workouts=w.error?[]:(w.data||[]);
+  photos=p.error?[]:(p.data||[]);
+  if(w.error)console.error('Erro ao carregar treinos:',w.error);
+  if(p.error)console.error('Erro ao carregar fotos:',p.error);
+
   for (const photo of photos) {
     const signed = await supabaseClient.storage.from('fitness-photos').createSignedUrl(photo.storage_path, 60 * 60);
     photo.signed_url = signed.data?.signedUrl || '';
   }
   render();
+  if(mealLoadError){
+    $('mealsList').innerHTML='<div class="panel empty-state">'+esc(mealLoadError)+'<br><br>Confira as permissões da tabela meals no Supabase.</div>';
+    toast('A dieta não foi carregada. Veja a mensagem na tela.');
+  }
 }
 function render(){
   const day=today(),dayMeals=meals.filter(x=>x.log_date===day),dayWorkouts=workouts.filter(x=>x.log_date===day);
