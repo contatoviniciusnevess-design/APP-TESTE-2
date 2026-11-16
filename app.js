@@ -156,11 +156,25 @@ function render(){
   $('dashboardMeals').innerHTML=dayMeals.length?dayMeals.map(x=>compact(x,'meal')).join(''):'<div class="empty-state">Nenhuma refeição cadastrada para hoje.</div>';
   $('dashboardWorkouts').innerHTML=dayWorkouts.length?dayWorkouts.map(x=>compact(x,'workout')).join(''):'<div class="empty-state">Nenhum treino cadastrado para hoje.</div>';
   $('mealsList').innerHTML=dayMeals.length?dayMeals.map(x=>record(x,'meal')).join(''):'<div class="panel empty-state">Sua dieta diária será carregada aqui.</div>';
-  // Mantém a sequência semanal fixa pela data do treino, sem usar o status de conclusão para ordenar.
+  // Ordem fixa por dia da semana. O status concluído nunca altera a posição do treino.
+  const weekdayRank = (item) => {
+    const label = (String(item.schedule || '') + ' ' + String(item.name || '')).toLocaleLowerCase('pt-BR');
+    const days = [
+      ['segunda', 0], ['terça', 1, 'terca'], ['quarta', 2], ['quinta', 3],
+      ['sexta', 4], ['sábado', 5, 'sabado'], ['domingo', 6]
+    ];
+    for (const day of days) {
+      if (label.includes(day[0]) || (day[2] && label.includes(day[2]))) return day[1];
+    }
+    return 7;
+  };
   const orderedWorkouts=[...workouts].sort((a,b)=>{
-    const dateA=String(a.log_date||'9999-12-31').slice(0,10),dateB=String(b.log_date||'9999-12-31').slice(0,10);
-    if(dateA!==dateB)return dateA.localeCompare(dateB);
-    return String(a.schedule||'').localeCompare(String(b.schedule||''),'pt-BR');
+    const rankDiff=weekdayRank(a)-weekdayRank(b);
+    if(rankDiff!==0)return rankDiff;
+    const dateA=String(a.log_date||'0000-00-00').slice(0,10);
+    const dateB=String(b.log_date||'0000-00-00').slice(0,10);
+    if(dateA!==dateB)return dateB.localeCompare(dateA);
+    return String(a.name||'').localeCompare(String(b.name||''),'pt-BR');
   });
   $('workoutsList').innerHTML=orderedWorkouts.length?orderedWorkouts.map(x=>record(x,'workout')).join(''):'<div class="panel empty-state">Você ainda não cadastrou treinos. Clique em “Novo treino” para começar.</div>';
   $('workoutsList').querySelectorAll('[data-action="open-workout"]').forEach(button=>{button.type='button';button.addEventListener('click',()=>{try{openWorkout(button.dataset.id);}catch(error){console.error('Erro ao abrir exercícios:',error);toast('Não foi possível abrir o guia: '+(error.message||'erro inesperado'));}});});
