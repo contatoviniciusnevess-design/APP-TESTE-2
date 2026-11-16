@@ -3,6 +3,7 @@
 const $ = (id) => document.getElementById(id);
 const config = window.APP_CONFIG || {};
 let supabaseClient, currentUser, meals = [], workouts = [], photos = [];
+window.getFitnessSchedule = () => ({ meals, workouts });
 const today = () => new Date().toLocaleDateString('en-CA');
 const niceDate = (d=today()) => new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
 const configured = () => config.SUPABASE_URL && config.SUPABASE_ANON_KEY &&
