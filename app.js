@@ -46,8 +46,33 @@ async function loadAll(){
     console.error('Erro ao consultar refeições:',m.error);
   } else {
     meals=m.data||[];
+    // Remove duplicatas da dieta padrão criadas em tentativas anteriores,
+    // preservando o registro concluído quando houver um.
     const todayMeals=meals.filter(x=>String(x.log_date).slice(0,10)===today());
-    const missingMeals=DEFAULT_DIET.filter(plan=>!todayMeals.some(saved=>saved.name===plan.name));
+    const duplicateIds=[];
+    for(const plan of DEFAULT_DIET){
+      const matches=todayMeals.filter(saved=>saved.name===plan.name);
+      if(matches.length>1){
+        matches.sort((a,b)=>Number(Boolean(b.completed))-Number(Boolean(a.completed)));
+        duplicateIds.push(...matches.slice(1).map(item=>item.id));
+      }
+    }
+    if(duplicateIds.length){
+      const removed=await supabaseClient.from('meals').delete().in('id',duplicateIds).eq('user_id',currentUser.id);
+      if(removed.error){
+        mealLoadError='As refeições estão duplicadas e não foi possível corrigir automaticamente: '+removed.error.message;
+        console.error('Erro ao remover refeições duplicadas:',removed.error);
+      } else {
+        const refreshed=await supabaseClient.from('meals').select('*').order('meal_time');
+        if(refreshed.error){
+          mealLoadError='As duplicatas foram removidas, mas não foi possível atualizar a lista: '+refreshed.error.message;
+        } else {
+          meals=refreshed.data||[];
+        }
+      }
+    }
+    const currentTodayMeals=meals.filter(x=>String(x.log_date).slice(0,10)===today());
+    const missingMeals=DEFAULT_DIET.filter(plan=>!currentTodayMeals.some(saved=>saved.name===plan.name));
     if(missingMeals.length){
       const seeded=await supabaseClient.from('meals').insert(
         missingMeals.map(item=>({...item,meal_time:null,user_id:currentUser.id,log_date:today(),completed:false}))
