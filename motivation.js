@@ -65,16 +65,26 @@
     $('extrasBtn').dataset.ready='1';
     $('extrasBtn').addEventListener('click',openSettings);
     $('motivationClose').addEventListener('click',()=>$('motivationDialog').close());
-    $('saveExtrasBtn').addEventListener('click',()=>{
-      save({dailyMotivation:$('dailyMotivationToggle').checked,mealReminder:$('mealReminderToggle').checked,workoutReminder:$('workoutReminderToggle').checked,workoutTime:$('workoutReminderTime').value||'18:00'});
+    $('saveExtrasBtn').addEventListener('click',async()=>{
+      const preferences={dailyMotivation:$('dailyMotivationToggle').checked,mealReminder:$('mealReminderToggle').checked,workoutReminder:$('workoutReminderToggle').checked,workoutTime:$('workoutReminderTime').value||'18:00'};
+      save(preferences);
+      if(window.saveFitnessPushPreferences){
+        const result=await window.saveFitnessPushPreferences(preferences);
+        if(!result.ok){$('notificationStatus').textContent='Preferências locais salvas, mas houve um erro ao sincronizar: '+result.message;return;}
+      }
       $('extrasDialog').close();
-      if(typeof window.toast==='function')window.toast('Preferências salvas neste dispositivo.');
+      if(typeof window.toast==='function')window.toast('Preferências salvas na sua conta.');
     });
     $('notificationPermissionBtn').addEventListener('click',async()=>{
       if(!('Notification' in window)){$('notificationStatus').textContent='Notificações não são suportadas neste navegador.';return}
       try{
         const permission=await Notification.requestPermission();
-        $('notificationStatus').textContent='Permissão de notificações: '+permission+(permission==='granted'?' — autorização concedida.':'');
+        if(permission==='granted'&&window.enableFitnessPush){
+          const result=await window.enableFitnessPush();
+          $('notificationStatus').textContent=result.ok?'Notificações ativadas neste dispositivo.':('Permissão concedida, mas não foi possível registrar o dispositivo: '+result.message);
+        }else{
+          $('notificationStatus').textContent='Permissão de notificações: '+permission+(permission==='granted'?' — autorização concedida.':'');
+        }
       }catch{$('notificationStatus').textContent='Não foi possível solicitar a permissão.'}
     });
     window.setInterval(checkReminders,15000);
