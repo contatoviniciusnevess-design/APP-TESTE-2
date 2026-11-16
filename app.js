@@ -12,6 +12,31 @@ const DEFAULT_DIET = [
   {name:'Ceia',meal_time:'',description:'250 ml de leite integral + 40 g de whey (20 g de proteína)'}
 ];
 window.getFitnessSchedule = () => ({ meals, workouts });
+
+const DEFAULT_WORKOUT_PLAN = [
+  {name:'Superior A — Segunda-feira',schedule:'Segunda-feira • Superior A',description:'PEITO\nSupino reto — 3×8–12\nSupino inclinado com halteres — 2×8–12\n\nCOSTAS\nPuxada alta — 3×8–12\nRemada baixa — 2×10–12\n\nOMBROS E BRAÇOS\nElevação lateral — 2×12–15\nTríceps corda — 2×10–15\nRosca direta — 2×10–12\n\nDuração estimada: 60 min. Descanso: 2 min nos compostos e 60–90 s nos isoladores.'},
+  {name:'Inferior A — Terça-feira',schedule:'Terça-feira • Inferior A',description:'ÊNFASE EM QUADRÍCEPS\nAgachamento ou hack — 3×8–10\nLeg press — 3×10–12\nCadeira extensora — 2×12–15\nMesa flexora — 2×10–12\nPanturrilha em pé — 3×12–15\n\nDuração estimada: 60 min. Priorize amplitude confortável e execução controlada.'},
+  {name:'Cardio — Quarta-feira',schedule:'Quarta-feira • Cardio exclusivo',description:'CARDIO MODERADO\nEsteira, bicicleta ou elíptico — 35–45 min\nIntensidade: moderada, mantendo capacidade de conversar em frases curtas.\nFinalização: 5 min leves para desacelerar.\nMobilidade opcional — 5 min.\n\nSem musculação neste dia.'},
+  {name:'Superior B — Quinta-feira',schedule:'Quinta-feira • Superior B',description:'PEITO E COSTAS\nSupino inclinado na máquina — 3×8–12\nCrucifixo na máquina — 2×12–15\nRemada articulada — 3×8–12\nPuxada neutra — 2×10–12\n\nOMBROS E BRAÇOS\nDesenvolvimento máquina — 2×8–12\nFace pull — 2×12–15\nRosca martelo — 2×10–12\nTríceps na polia — 2×10–12\n\nDuração estimada: 60 min.'},
+  {name:'Inferior B — Sexta-feira',schedule:'Sexta-feira • Inferior B',description:'ÊNFASE EM POSTERIOR E GLÚTEOS\nTerra romeno — 3×8–10\nMesa flexora — 3×10–12\nElevação pélvica — 3×8–12\nCadeira abdutora — 2×12–15\nCadeira extensora — 2×12–15\nPanturrilha sentada — 3×12–15\n\nDuração estimada: 60 min.'},
+  {name:'Complementar — Sábado',schedule:'Sábado • Ombros, braços e abdômen',description:'OMBROS, BRAÇOS E CORE\nElevação lateral — 3×12–15\nRosca Scott — 3×10–12\nTríceps francês na polia — 3×10–12\nRosca no cabo — 2×12–15\nTríceps corda — 2×12–15\nPrancha — 3×30–45 s\nAbdominal na máquina — 2×12–15\n\nDuração estimada: 50–60 min. Faça em superséries de bíceps/tríceps para caber no tempo.'}
+];
+function weekDate(dayOffset){
+  const d=new Date();d.setHours(12,0,0,0);
+  const monday=(d.getDay()+6)%7;d.setDate(d.getDate()-monday+dayOffset);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+async function ensureWeeklyWorkouts(){
+  const start=weekDate(0),end=weekDate(6);
+  const existing=workouts.filter(x=>String(x.log_date).slice(0,10)>=start&&String(x.log_date).slice(0,10)<=end);
+  const missing=DEFAULT_WORKOUT_PLAN.filter(plan=>!existing.some(x=>x.name===plan.name&&String(x.log_date).slice(0,10)>=start&&String(x.log_date).slice(0,10)<=end));
+  if(!missing.length)return;
+  const inserted=await supabaseClient.from('workouts').insert(missing.map((item,index)=>({...item,user_id:currentUser.id,log_date:weekDate(index),completed:false})));
+  if(inserted.error){console.error('Erro ao cadastrar a divisão semanal:',inserted.error);toast('Não foi possível cadastrar automaticamente a divisão semanal.');return;}
+  const refreshed=await supabaseClient.from('workouts').select('*').order('created_at');
+  if(!refreshed.error)workouts=refreshed.data||workouts;
+}
+
 const today = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const niceDate = (d=today()) => new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
 const configured = () => config.SUPABASE_URL && config.SUPABASE_ANON_KEY &&
@@ -93,6 +118,7 @@ async function loadAll(){
   }
 
   workouts=w.error?[]:(w.data||[]);
+  if(!w.error)await ensureWeeklyWorkouts();
   photos=p.error?[]:(p.data||[]);
   if(w.error)console.error('Erro ao carregar treinos:',w.error);
   if(p.error)console.error('Erro ao carregar fotos:',p.error);
@@ -152,7 +178,8 @@ async function saveItem(type,data,id){
 async function toggle(type,id){
   const list=type==='meal'?meals:workouts,item=list.find(x=>String(x.id)===String(id));if(!item)return;
   const table=type==='meal'?'meals':'workouts';
-  const {error}=await supabaseClient.from(table).update({completed:!item.completed,log_date:today()}).eq('id',id).eq('user_id',currentUser.id);
+  const changes=type==='meal'?{completed:!item.completed,log_date:today()}:{completed:!item.completed};
+  const {error}=await supabaseClient.from(table).update(changes).eq('id',id).eq('user_id',currentUser.id);
   if(error){toast('Não foi possível atualizar.');return;}await loadAll();
 }
 async function deleteItem(type,id){
